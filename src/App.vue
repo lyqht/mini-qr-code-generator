@@ -11,6 +11,14 @@ import 'vue-i18n'
 import { getNumericCSSValue } from './utils/formatting'
 import { sortedLocales } from './utils/language'
 import { allPresets } from './utils/presets'
+import '@webzlodimir/vue-bottom-sheet/dist/style.css'
+import VueBottomSheet from '@webzlodimir/vue-bottom-sheet'
+
+const myBottomSheet = ref<InstanceType<typeof VueBottomSheet>>()
+
+const closeBottomSheet = () => {
+  myBottomSheet.value.close()
+}
 
 const defaultPreset = allPresets[0]
 const data = ref(defaultPreset.data)
@@ -645,6 +653,13 @@ function uploadImage() {
         </div>
       </div>
     </div>
+    <VueBottomSheet
+      ref="myBottomSheet"
+    >
+      <h1>Lorem Ipsum</h1>
+      <h2>What is Lorem Ipsum?</h2>
+      <p><strong>Lorem Ipsum</strong> is simply dummy text</p>
+    </VueBottomSheet>
   </main>
 </template>
 

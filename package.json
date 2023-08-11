@@ -19,6 +19,7 @@
     ]
   },
   "dependencies": {
+    "@webzlodimir/vue-bottom-sheet": "^3.0.2",
     "dom-to-image": "^2.6.0",
     "qr-code-styling": "^1.6.0-rc.1",
     "vue": "^3.2.47"
