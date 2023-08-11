@@ -6,7 +6,7 @@ import {
   downloadSvgElement
 } from '@/utils/convertToImage'
 import type { CornerDotType, CornerSquareType, DotType } from 'qr-code-styling'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import 'vue-i18n'
 import { getNumericCSSValue } from './utils/formatting'
 import { sortedLocales } from './utils/language'
@@ -16,9 +16,13 @@ import VueBottomSheet from '@webzlodimir/vue-bottom-sheet'
 
 const myBottomSheet = ref<InstanceType<typeof VueBottomSheet>>()
 
-const closeBottomSheet = () => {
-  myBottomSheet.value.close()
+const openBottomSheet = () => {
+  myBottomSheet.value.open()
 }
+
+onMounted(() => {
+  openBottomSheet()
+})
 
 const defaultPreset = allPresets[0]
 const data = ref(defaultPreset.data)
@@ -653,9 +657,7 @@ function uploadImage() {
         </div>
       </div>
     </div>
-    <VueBottomSheet
-      ref="myBottomSheet"
-    >
+    <VueBottomSheet ref="myBottomSheet" :max-width="1000">
       <h1>Lorem Ipsum</h1>
       <h2>What is Lorem Ipsum?</h2>
       <p><strong>Lorem Ipsum</strong> is simply dummy text</p>
