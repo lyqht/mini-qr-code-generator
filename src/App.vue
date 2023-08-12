@@ -5,25 +5,33 @@ import {
   downloadPngElement,
   downloadSvgElement
 } from '@/utils/convertToImage'
+import { breakpointsTailwind, useBreakpoints, useDark } from '@vueuse/core'
+import VueBottomSheet from '@webzlodimir/vue-bottom-sheet'
+import '@webzlodimir/vue-bottom-sheet/dist/style.css'
 import type { CornerDotType, CornerSquareType, DotType } from 'qr-code-styling'
 import { computed, onMounted, ref, watch } from 'vue'
 import 'vue-i18n'
 import { getNumericCSSValue } from './utils/formatting'
 import { sortedLocales } from './utils/language'
 import { allPresets } from './utils/presets'
-import '@webzlodimir/vue-bottom-sheet/dist/style.css'
-import VueBottomSheet from '@webzlodimir/vue-bottom-sheet'
 
+const isDark = useDark()
+
+// Bottom sheet
+const isMounted = ref(false)
+const breakpoints = useBreakpoints(breakpointsTailwind)
+const isLargerThanMd = breakpoints.greater('md') // only larger than sm
 const myBottomSheet = ref<InstanceType<typeof VueBottomSheet>>()
-
 const openBottomSheet = () => {
-  myBottomSheet.value.open()
+  myBottomSheet.value?.open()
 }
 
 onMounted(() => {
   openBottomSheet()
+  isMounted.value = true
 })
 
+// QR Code Style Attributes
 const defaultPreset = allPresets[0]
 const data = ref(defaultPreset.data)
 const image = ref(defaultPreset.image)
@@ -279,159 +287,10 @@ function uploadImage() {
       </div>
       <div class="flex flex-col-reverse items-start justify-center gap-4 md:flex-row md:gap-12">
         <div
+          v-if="isLargerThanMd"
           id="main-content"
           class="sticky top-0 flex w-full shrink-0 flex-col items-center justify-center p-4 md:w-fit"
-        >
-          <div id="qr-code-container">
-            <div
-              class="grid place-items-center overflow-hidden"
-              :style="[
-                style,
-                {
-                  width: '200px',
-                  height: '200px'
-                }
-              ]"
-            >
-              <StyledQRCode
-                v-if="data"
-                v-bind="{ ...qrCodeProps, width: 200, height: 200 }"
-                role="img"
-                aria-label="QR code"
-              />
-              <p v-else>{{ $t('No data!') }}</p>
-            </div>
-          </div>
-          <div class="mt-4 flex flex-col items-center gap-2">
-            <div class="flex flex-col items-center justify-center gap-3">
-              <button
-                id="copy-qr-image-button"
-                class="button flex w-fit flex-row gap-1"
-                @click="copyQRToClipboard"
-                :aria-label="$t('Copy QR Code to clipboard')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <g
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M8 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2z"
-                    />
-                    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
-                  </g>
-                </svg>
-                <p>{{ $t('Copy QR Code to clipboard') }}</p>
-              </button>
-              <button
-                id="save-qr-code-config-button"
-                class="button flex w-fit flex-row gap-1"
-                @click="saveQRConfig"
-                :aria-label="$t('Save QR Code configuration')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <g
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  >
-                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                    <path
-                      d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zm-5-4v-6"
-                    />
-                    <path d="M9.5 14.5L12 17l2.5-2.5" />
-                  </g>
-                </svg>
-                <p>{{ $t('Save QR Code configuration') }}</p>
-              </button>
-              <button
-                id="load-qr-code-config-button"
-                class="button flex w-fit flex-row gap-1"
-                @click="loadQrConfig"
-                :aria-label="$t('Load QR Code configuration')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <g
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                  >
-                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                    <path
-                      d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zm-5-10v6"
-                    />
-                    <path d="M9.5 13.5L12 11l2.5 2.5" />
-                  </g>
-                </svg>
-                <p>{{ $t('Load QR Code configuration') }}</p>
-              </button>
-            </div>
-            <div id="export-options" class="pt-4">
-              <p class="pb-2">{{ $t('Export as') }}</p>
-              <div class="flex flex-row items-center gap-2">
-                <button
-                  id="download-qr-image-button-png"
-                  class="button"
-                  @click="downloadQRImageAsPng"
-                  :aria-label="$t('Download QR Code as PNG')"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                  >
-                    <g
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                    >
-                      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                      <path
-                        d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4m1 3h-1a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1v-3M5 18h1.5a1.5 1.5 0 0 0 0-3H5v6m6 0v-6l3 6v-6"
-                      />
-                    </g>
-                  </svg>
-                </button>
-                <button
-                  id="download-qr-image-button-svg"
-                  class="button"
-                  @click="downloadQRImageAsSvg"
-                  :aria-label="$t('Download QR Code as SVG')"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                  >
-                    <g
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                    >
-                      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                      <path
-                        d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4M4 20.25c0 .414.336.75.75.75H6a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h1.25a.75.75 0 0 1 .75.75m3-.75l2 6l2-6m6 0h-1a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1v-3"
-                      />
-                    </g>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        ></div>
         <div id="settings" class="flex w-full grow flex-col items-start gap-8 text-start">
           <div>
             <label for="preset-selector">{{ $t('Preset') }}</label>
@@ -657,11 +516,148 @@ function uploadImage() {
         </div>
       </div>
     </div>
-    <VueBottomSheet ref="myBottomSheet" :max-width="1000">
-      <h1>Lorem Ipsum</h1>
-      <h2>What is Lorem Ipsum?</h2>
-      <p><strong>Lorem Ipsum</strong> is simply dummy text</p>
+    <VueBottomSheet v-if="!isLargerThanMd" ref="myBottomSheet" :overlay="false" :max-height="800">
+      <div
+        id="main-content"
+        class="flex flex-col items-center justify-center pb-4 text-zinc-900"
+      ></div>
     </VueBottomSheet>
+    <Teleport v-if="isMounted" to="#main-content">
+      <p class="w-full pb-4 text-center text-lg" v-if="!isLargerThanMd">{{ $t('Preview') }}</p>
+      <div id="qr-code-container">
+        <div
+          class="grid place-items-center overflow-hidden"
+          :style="[
+            style,
+            {
+              width: '200px',
+              height: '200px'
+            }
+          ]"
+        >
+          <StyledQRCode
+            v-if="data"
+            v-bind="{ ...qrCodeProps, width: 200, height: 200 }"
+            role="img"
+            aria-label="QR code"
+          />
+          <p v-else>{{ $t('No data!') }}</p>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-col items-center gap-2">
+        <div class="flex flex-col items-center justify-center gap-3">
+          <button
+            id="copy-qr-image-button"
+            class="button flex w-fit flex-row gap-1"
+            @click="copyQRToClipboard"
+            :aria-label="$t('Copy QR Code to clipboard')"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path d="M8 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2z" />
+                <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+              </g>
+            </svg>
+            <p>{{ $t('Copy QR Code to clipboard') }}</p>
+          </button>
+          <button
+            id="save-qr-code-config-button"
+            class="button flex w-fit flex-row gap-1"
+            @click="saveQRConfig"
+            :aria-label="$t('Save QR Code configuration')"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zm-5-4v-6" />
+                <path d="M9.5 14.5L12 17l2.5-2.5" />
+              </g>
+            </svg>
+            <p>{{ $t('Save QR Code configuration') }}</p>
+          </button>
+          <button
+            id="load-qr-code-config-button"
+            class="button flex w-fit flex-row gap-1"
+            @click="loadQrConfig"
+            :aria-label="$t('Load QR Code configuration')"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              >
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zm-5-10v6" />
+                <path d="M9.5 13.5L12 11l2.5 2.5" />
+              </g>
+            </svg>
+            <p>{{ $t('Load QR Code configuration') }}</p>
+          </button>
+        </div>
+        <div id="export-options" class="pt-4">
+          <p class="pb-2">{{ $t('Export as') }}</p>
+          <div class="flex flex-row items-center gap-2">
+            <button
+              id="download-qr-image-button-png"
+              class="button"
+              @click="downloadQRImageAsPng"
+              :aria-label="$t('Download QR Code as PNG')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <g
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                >
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path
+                    d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4m1 3h-1a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1v-3M5 18h1.5a1.5 1.5 0 0 0 0-3H5v6m6 0v-6l3 6v-6"
+                  />
+                </g>
+              </svg>
+            </button>
+            <button
+              id="download-qr-image-button-svg"
+              class="button"
+              @click="downloadQRImageAsSvg"
+              :aria-label="$t('Download QR Code as SVG')"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <g
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                >
+                  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                  <path
+                    d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4M4 20.25c0 .414.336.75.75.75H6a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H5a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h1.25a.75.75 0 0 1 .75.75m3-.75l2 6l2-6m6 0h-1a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1v-3"
+                  />
+                </g>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </main>
 </template>
 
